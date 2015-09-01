@@ -1,0 +1,130 @@
+---
+Author: Jesus Dacuma
+Title: Statistical Inference Project - Part 1
+date: "August 23, 2015"
+output: word_document
+---
+
+##Investigating the Central Limit Theorem Using the Exponential Distribution
+
+###Overview
+
+This report investigates the Central Limit Theorem, one of the most important theorems in statistics. Through a simulation of exponential random variables, one can see that the distribution of a large number of averages approximates to the normal distribution. This report will verify the normal approximation by comparing the theoretical mean and variance to the sample mean and variance of the simulated exponentials.
+
+###The Exponential Distribution
+Figure 1 in the Appendix shows the distribution of forty exponentials. The blue bins make the histogram of the simulated data. The red density curve and dotted line shows the theoretical exponential distribution and mean, while the green density and dotted line shows the experimental smoothed distribution and mean.
+
+Note that the experimental distribution approximates the theoretical exponential distribution, and the experimental mean is close to the theoretical mean.
+
+```{r, eval=TRUE, echo=FALSE}
+set.seed(31)
+
+# Set the experimental parameters
+lambda <- 0.2 # parameter for exponential random variable
+i <- 40       # number of random variables generated per trial
+n <- 1000     # number of trials
+
+# Generate exponential random variables
+Xi <- rexp(i, lambda) 
+df <- data.frame(Xi)
+
+# Compare the sample and theoretical means
+X_bar <- mean(Xi) # sample mean of random variables
+X <- 1/lambda # mean of an exponential distribution, also the standard deviation
+df_x <- data.frame(means=c(X_bar, X), row.names = c("Sample Mean", "Theoretical Mean"))
+df_x
+```
+
+###The Central Limit Theorem
+
+#### Simulations
+
+To simulate the Central Limit Theorem, I generated 1000 sets of 40 exponential random variables, and saved the mean of each of those sets in a data frame. I also normalized the means by subtracting the theoretical mean and dividing by the standard error, which helps in plotting the distribution of the averages.
+
+####Distribution
+Figure 2 of the Appendix shows the histogram (in blue) of the means of each simulation of forty exponentials. The green smooth line shows the sample distribution based of the averages of the generated exponentials. The red smooth line shows the theoretical standard normal distribution. The green and red distributions are not identical, but have very similar shapes. In comparison, the exponential distributions shown in Figure 1 look much different that the distributions in Figure 2. Even though the distribution of a large collection of exponential random variables is exponential, the distribution of a large collection of averages of exponential random variables is normal!
+
+####Sample Mean versus Theoretical Mean
+The green and red dotted lines in Figure 2 show where the sample mean and theoretical mean lie within the sample and theoretical distributions. The green dotted line is difficult to see because it is almost completely overlapped by the red dotted line, showing that the sample and theoretical means are so close. In fact the sample mean is less than 1% off from the theoretical mean. Note that the mean of the simulated averages is approximately the mean of the single run generated earlier.
+
+```{r, eval=TRUE, echo=FALSE}
+# Generate averages of 40 exponential random variables
+df_mns <- data.frame(means = numeric(n))
+for(ii in 1:n){
+  df_mns[ii,] = mean(rexp(i, lambda))
+}
+
+# Normalize the generated averages
+SE <- X/sqrt(i)
+df_mns$norm <- (df_mns$means - X) / SE
+
+# Calculate the sample mean, sample variance, theoretical mean, and theoretical variance
+X_mns_bar <- mean(df_mns$means)
+Var_X <- X*X / i
+S2 <- var(df_mns$means)
+df_x_mns <- data.frame(mean = c(X_mns_bar, X), variance = c(S2, Var_X), row.names = c('sample', 'theoretical'))
+df_x_mns
+```
+
+####Sample Variance versus Theoretical Variance
+
+As shown above, the sample variance is a good estimator of the theoretical variances, as there is less than a 3% difference between the two. Note that the variance of the averages is less than the variance of individual exponentials by a factor of 40 (the number of exponentials generated in each simulation).
+
+## Appendix
+
+###Code
+```{r, eval=FALSE}
+set.seed(31)
+
+# Set the experimental parameters
+lambda <- 0.2 # parameter for exponential random variable
+i <- 40       # number of random variables generated per trial
+n <- 1000     # number of trials
+
+# Generate exponential random variables
+Xi <- rexp(i, lambda) 
+df <- data.frame(Xi)
+
+# Compare the sample and theoretical means
+X_bar <- mean(Xi) # sample mean of random variables
+X <- 1/lambda # mean of an exponential distribution, also the standard deviation
+df_x <- data.frame(means=c(X_bar, X), row.names = c("Sample Mean", "Theoretical Mean"))
+
+# Generate averages of 40 exponential random variables
+df_mns <- data.frame(means = numeric(n))
+for(ii in 1:n){
+  df_mns[ii,] = mean(rexp(i, lambda))
+}
+
+# Normalize the generated averages
+SE <- X/sqrt(i)
+df_mns$norm <- (df_mns$means - X) / SE
+
+# Calculate the sample mean, sample variance, theoretical mean, and theoretical variance
+X_mns_bar <- mean(df_mns$means)
+Var_X <- X*X / i
+S2 <- var(df_mns$means)
+df_x_mns <- data.frame(mean = c(X_mns_bar, X), variance = c(S2, Var_X), row.names = c('sample', 'theoretical'))
+```
+
+###Plots
+```{r, echo=FALSE}
+library(ggplot2)
+
+g1 <- ggplot(df, aes(x=Xi))
+g1 <- g1 + geom_histogram(binwidth=4, color="black", aes(y=..density.., fill=..count..))
+g1 <- g1 + geom_vline(data=df_x, aes(xintercept=means, show_guide = TRUE), 
+                      color=c("green", "red"), linetype="dashed", size=1)
+g1 <- g1 + stat_function(fun = dexp, color = "red", arg = list(rate = lambda), size = 1)
+g1 <- g1 + geom_density(color = "green", size = 1)
+g1 <- g1 + labs(title='Fig. 1: Distribution of 40 Sample Exponentials', x='Samples', y='Density')
+print(g1)
+
+g2 <- ggplot(df_mns, aes(x=norm))
+g2 <- g2 + geom_histogram(binwidth=.3, color="black", aes(y=..density.., fill=..count..))
+g2 <- g2 + geom_vline(data=df_x_mns, aes(xintercept=mean-X, show_guide = TRUE), color=c("green", "red"), linetype="dashed", size=1)
+g2 <- g2 + stat_function(fun = dnorm, color = "red", size = 1)
+g2 <- g2 + geom_density(color = "green", size = 1)
+g2 <- g2 + labs(title='Fig. 2: Distribution of Mean of 40 Sample Exponentials', x='Means', y='Density')
+print(g2)
+```

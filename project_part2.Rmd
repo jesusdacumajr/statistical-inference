@@ -1,0 +1,102 @@
+---
+title: "Statistical Inference Project - Part 2"
+author: "Jesus Dacuma"
+date: "August 23, 2015"
+output: html_document
+---
+
+##Analyzing the ToothGrowth Dataset in R
+
+###A Basic Summary of the Data
+The ToothGrowth dataset in R contains data on the length of teeth in different guinea pigs that were given specific doses of different Vitamin C supplements. We can load and the dataset and display its structure.
+
+```{r, eval=TRUE}
+data("ToothGrowth")
+str(ToothGrowth)
+```
+
+We can see that the data set contains the response _len_ for tooth length, and the supplement type and dose as the factors. The supplement levels are apparent from the str function, and as shown in the code below, there are three levels of doses.
+
+```{r, eval=TRUE}
+unique(ToothGrowth$dose)
+```
+
+We can also take a sample of the top and bottom of the data. Since the dataset is small, just observing that the data shows that it contains 10 replications of each of the 6 different combinations of supplement and dose. 
+
+```{r, eval=TRUE}
+head(ToothGrowth, 3)
+tail(ToothGrowth, 3)
+```
+
+###Exploratory Data Analysis
+For quick and dirty exploratory analysis, we can use a 5 point summary (including the mean) of the response.
+
+```{r, eval=TRUE}
+summary(ToothGrowth$len)
+```
+
+Boxplots help to compare the difference in response from the two separate factors. Figure 1 of the appendix shows the box plot for tooth length grouped by supplement, while Figure 2 does the same for dose. Figure 3 shows the box plots broken up by supplement/dose combination.
+
+Lastly, we can use the histograms of Figures 4 and 5 to see that the distributions of tooth length by each factor somewhat resemble a normal distribution, so we can assume normality (as a t-test is robust to deviations from normality).
+
+From the exploratory analysis, we can see that there is a difference, between supplement types, although its visually unclear if a significant statistical difference exists without further hypothesis testing. Also, the box plots for dose levels clearly show that increasing the dose (within the levels tested) will increase the response. However, Figure 3 shows that any differences in supplement types may diminish as the dose is increased. This is perhaps the most interesting phenomenon to explore.
+
+###Hypothesis Testing
+
+The ToothGrowth dataset can be tested using a two-sample test (since the test subjects were all different guinea pigs). Test 1 fails to reject the null hypothesis that the difference between the mean response from both supplements is zero. The test statistic is 1.92, and the null hypothesis (zero) lies within the confidence interval. One should note however, that the test statistic is very close to the 97.5% quantile and the null hypothesis is quite close to the lower bound of the confidence interval. Since Test 1 does not account for dose, there may be more to explore.
+
+```{r, eval=TRUE}
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = ToothGrowth) # Test 1
+```
+
+Tests 2, 3 and 4 in the appendix are more two-sample tests at each dose level. Tests 2 and 3 have test statistics at 3.17 and 4.03, both of which are greater than 3, or approximately the 99.5% quantile. These tests give us strong evidence to reject the null hypothesis that the supplements at dose levels 0.5 and 1.0 mg are statistically different.
+
+Test 4, however, shows the opposite. The test statistic is close to zero, and the null hypothesis lies almost directly in the center of the confidence interval. We fail to reject the null hypothesis that the means of the two supplements at dose level 2.0 mg is equal.
+
+```{r, eval=TRUE}
+test2 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = ToothGrowth[ToothGrowth$dose==0.5,])
+test3 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = ToothGrowth[ToothGrowth$dose==1,])
+test4 <- t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data = ToothGrowth[ToothGrowth$dose==2,])
+```
+
+```{r, eval=TRUE, echo=FALSE}
+test2data <- c(dose=0.5, statistic = test2$statistic, 
+               CI_lower = test2$conf.int[1], CI_upper = test2$conf.int[2], 
+               mean_OJ = test2$estimate[1], mean_VC = test2$estimate[2])
+test3data <- cbind(dose=1.0, statistic = test3$statistic, 
+               CI_lower = test3$conf.int[1], CI_upper = test3$conf.int[2], 
+               mean_OJ = test3$estimate[1], mean_VC = test3$estimate[2])
+test4data <- cbind(dose=2.0, statistic = test4$statistic, 
+                   CI_lower = test4$conf.int[1], CI_upper = test4$conf.int[2], 
+                   mean_OJ = test4$estimate[1], mean_VC = test4$estimate[2])
+tests <- data.frame()
+tests <- rbind(tests, "Test 2" = test2data, "Test 3" = test3data, "Test 4" = test4data)
+tests
+```
+
+###Conclusion
+
+Assuming that the two supplements have inequal variance (the t-tests used the inequal variance method) and the distribution for tooth growth is normal, we can conclude that the Orange Juice supplements at 0.5 and 1.0 mg increases tooth growth more than supplements of ascorbic acid. However, when increasing the dose to 2.0 mg, there is no difference between supplements.
+
+##Appendix
+
+```{r, echo=FALSE}
+boxplot(len~supp, data=ToothGrowth, col=(c("orange","green")),
+        main="Fig. 1: Tooth Growth by Supplement", xlab="Supplement Type", ylab="Tooth Length")
+
+boxplot(len~dose, data=ToothGrowth, col=(c("green","yellow", "orange")),
+        main="Fig. 2: Tooth Growth by Dose", xlab="Dose (mg)", ylab="Tooth Length")
+
+boxplot(len~supp*dose, data=ToothGrowth, col=(c("orange","green")),
+        main="Fig. 3: Tooth Growth by Supplement and Dose", xlab="Supplement Type and Dose (mg)", ylab="Tooth Length")
+
+library(ggplot2)
+
+ggplot(ToothGrowth, aes(x=len, fill=factor(dose))) +
+  geom_histogram(binwidth=2.5, position="dodge") +
+  labs(title='Fig. 4: Tooth Growth by Dose', y='Count', x='Tooth Length')
+
+ggplot(ToothGrowth, aes(x=len, fill=supp)) +
+  geom_histogram(binwidth=2.5, position="dodge") +
+  labs(title='Fig. 5: Tooth Growth by Supplement', y='Count', x='Tooth Length')
+```
