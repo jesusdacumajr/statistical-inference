@@ -69,17 +69,17 @@ summary(ToothGrowth$len)
 
 Boxplots help to compare the difference in response from the two separate factors. Figure 1 of the appendix shows the box plot for tooth length grouped by supplement, while Figure 2 does the same for dose. Figure 3 shows the box plots broken up by supplement/dose combination.
 
-![Figure 1 Plot](fig1.png) 
+[Figure 1 Plot](fig1.png) 
 
-![Figure 2 Plot](fig2.png) 
+[Figure 2 Plot](fig2.png) 
 
-![Figure 3 Plot](fig3.png) 
+[Figure 3 Plot](fig3.png) 
 
 Lastly, we can use the histograms of Figures 4 and 5 to see that the distributions of tooth length by each factor somewhat resemble a normal distribution, so we can assume normality (as a t-test is robust to deviations from normality).
 
-![Figure 4 Plot](fig4.png) 
+[Figure 4 Plot](fig4.png) 
 
-![Figure 5 Plot](fig5.png)
+[Figure 5 Plot](fig5.png)
 
 From the exploratory analysis, we can see that there is a difference, between supplement types, although its visually unclear if a significant statistical difference exists without further hypothesis testing. Also, the box plots for dose levels clearly show that increasing the dose (within the levels tested) will increase the response. However, Figure 3 shows that any differences in supplement types may diminish as the dose is increased. This is perhaps the most interesting phenomenon to explore.
 
